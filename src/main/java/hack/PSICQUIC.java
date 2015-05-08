@@ -3,6 +3,12 @@ package hack;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import hack.model.Protein;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by vincekyi on 5/8/15.
@@ -18,7 +24,6 @@ public class PSICQUIC {
         HttpResponse<String> request = null;
         try {
             request = Unirest.get(uri)
-                    .header("accept", "text/plain")
                     .asString();
             return request.getBody().toString();
 
@@ -28,10 +33,38 @@ public class PSICQUIC {
         return null;
     }
 
+    public static List<String> getInteractingProteins(String uniprotID){
+        Set<String> results = new HashSet<>();
+
+        uniprotID = uniprotID.toUpperCase();
+        String[] entries = PSICQUIC.getJSON(psicquicURL+uniprotID).split("\n");
+        for(String s: entries){
+
+            String[] tokens = s.split("\t");
+
+            int firstColon = tokens[0].indexOf(':');
+            String firstProtein = tokens[0].substring(firstColon + 1);
+
+            if(!firstProtein.equals(uniprotID))
+                results.add(firstProtein);
+
+            int secondColon = tokens[1].indexOf(':');
+            String secondProtein = tokens[1].substring(secondColon + 1);
+
+            if(!secondProtein.equals(uniprotID))
+                results.add(secondProtein);
+        }
+
+        ArrayList<String> list = new ArrayList<>(results);
+        return list;
+    }
+
 
     public static void main(String args[]){
 
-    System.out.println(PSICQUIC.getJSON(psicquicURL+"p99999"));
+        for(String s: PSICQUIC.getInteractingProteins("P99999")) {
+            System.out.println(s);
+        }
 
 
     }
