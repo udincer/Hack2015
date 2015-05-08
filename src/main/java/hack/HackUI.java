@@ -6,6 +6,9 @@ import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by umut on 5/8/15.
  */
@@ -33,12 +36,13 @@ public class HackUI extends UI {
             public void buttonClick(Button.ClickEvent clickEvent) {
                 String proteins = textArea.getValue();
                 String[] p = proteins.split("\\r?\\n");
-                for (String s : p) {
-                    System.out.println(s);
-                }
+                List<String> geneNameList = Arrays.asList(p);
 
-                Notification.show("Hi");
-                omimClient.getDiseases("H");
+                for (String geneName : geneNameList) {
+                    String gene = uniprotClient.mapToGeneSymbol(geneName);
+                    Notification.show(gene);
+                    System.out.println(gene);
+                }
             }
         });
 
