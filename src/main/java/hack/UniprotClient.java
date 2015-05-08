@@ -20,7 +20,9 @@ public class UniprotClient {
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
             if (line.substring(0,2).equals("GN")) {
-                geneSymbol = line.substring(line.indexOf("Name=")+5, line.indexOf(";"));
+                int lastIndex = !line.contains("{") ? line.indexOf(";") : Math.min(line.indexOf(";"), line.indexOf("{"));
+                geneSymbol = line.substring(line.indexOf("Name=")+5, lastIndex);
+                break;
             }
         }
         scanner.close();
