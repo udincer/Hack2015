@@ -20,21 +20,24 @@ public class HackUI extends UI {
     public static final String RED_HEART_INVISIBLE = "<span style=\"visibility:hidden\">♥ </span>";
     public static final String DEFAULTS = "P38398\nP19429\nQ6UWE0";
 
-
     final VerticalLayout rootLayout = new VerticalLayout();
     final Panel mainPagePanel = new Panel();
     final VerticalLayout mainPageLayout = new VerticalLayout();
     final Label titleLabel = new Label(TITLE);
     final TextArea textArea = new TextArea("Enter proteins here");
     final Button button = new Button("Go!");
+    final CheckBox phenotypicSeriesCheckbox = new CheckBox("Display phenotypic series");
+    final Label infoLabel = new Label("BD2K/NoB Hackathon 2015");
 
     final VerticalLayout resultPageLayout = new VerticalLayout();
     final Button returnButton = new Button("New query!");
+    final Button goToDiseaseTableButton = new Button("Disease to Protein Table");
     final TreeTable resultsTable = new TreeTable("Disease associations");
 
-    final CheckBox phenotypicSeriesCheckbox = new CheckBox("Display phenotypic series");
-
-    final Label infoLabel = new Label("BD2K/NoB Hackathon 2015");
+    final VerticalLayout diseaseTableLayout = new VerticalLayout();
+    final Table diseaseTable = new Table("Disease associations");
+    final Button returnToMainPageButton = new Button("New query!");
+    final Button goToResultsViewButton = new Button("Protein to Disease Table");
 
     @Autowired
     public OmimClient omimClient;
@@ -50,6 +53,7 @@ public class HackUI extends UI {
     protected void init(VaadinRequest vaadinRequest) {
         initMainPage();
         initResultsPage();
+        initDiseaseTablePage();
 
         loadMainPage();
     }
@@ -116,10 +120,50 @@ public class HackUI extends UI {
                 loadMainPage();
             }
         });
+
+        goToDiseaseTableButton.addClickListener(new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+                loadDiseaseTablePage();
+            }
+        });
+
         resultPageLayout.addComponent(resultsTable);
         resultPageLayout.addComponent(returnButton);
+        resultPageLayout.addComponent(goToDiseaseTableButton);
         resultPageLayout.setSpacing(true);
         resultPageLayout.setMargin(true);
+    }
+
+    public void initDiseaseTablePage(){
+        diseaseTableLayout.addComponent(new Label("Disease table page"));
+        diseaseTable.addContainerProperty("Cardiovascular Disease", String.class, null);
+        diseaseTable.addContainerProperty("Protein(s)", String.class, null);
+        diseaseTable.addContainerProperty("P-value", String.class, null);
+        diseaseTable.addContainerProperty("Adjusted P-value", String.class, null);
+
+        diseaseTable.setHeight(500f, Unit.PIXELS);
+        diseaseTable.setWidth(1200f, Unit.PIXELS);
+
+        goToResultsViewButton.addClickListener(new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+                loadResultsPage();
+            }
+        });
+
+        returnToMainPageButton.addClickListener(new Button.ClickListener() {
+            @Override
+            public void buttonClick(Button.ClickEvent event) {
+                loadMainPage();
+            }
+        });
+
+        diseaseTableLayout.addComponent(diseaseTable);
+        diseaseTableLayout.addComponent(returnToMainPageButton);
+        diseaseTableLayout.addComponent(goToResultsViewButton);
+        diseaseTableLayout.setMargin(true);
+        diseaseTableLayout.setSpacing(true);
     }
 
     public void loadMainPage(){
@@ -127,7 +171,19 @@ public class HackUI extends UI {
         setContent(rootLayout);
     }
 
+    public void loadDiseaseTablePage(){
+        int i = 0;
+        for (CVD2Protein protein : cvd2proteins) {
+            String adjustedP = "" + protein.calculateAdjustedPValue(cvd2proteins.size());
+            diseaseTable.addItem(new Object[] {protein.getName(), protein.getProteins().toString(), ""+protein.getpValue(), adjustedP}, i+1);
+            i++;
+        }
+        setContent(diseaseTableLayout);
+    }
+
     public void loadResultsPage(){
+        goToDiseaseTableButton.setVisible(phenotypicSeriesCheckbox.getValue());
+
         int i = 0;
         resultsTable.removeAllItems();
         AccessDiseaseDB.createConnection();
