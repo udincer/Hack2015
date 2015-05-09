@@ -175,7 +175,11 @@ public class HackUI extends UI {
         int i = 0;
         for (CVD2Protein protein : cvd2proteins) {
             String adjustedP = "" + protein.calculateAdjustedPValue(cvd2proteins.size());
-            diseaseTable.addItem(new Object[] {protein.getName(), protein.getProteins().toString(), ""+protein.getpValue(), adjustedP}, i+1);
+            String proteinsSet = "";
+            for (String s : protein.getProteins()) {
+                proteinsSet += s + " ";
+            }
+            diseaseTable.addItem(new Object[] {protein.getName(), proteinsSet, ""+protein.getpValue(), adjustedP}, i+1);
             i++;
         }
         setContent(diseaseTableLayout);
@@ -230,7 +234,7 @@ public class HackUI extends UI {
                         if (phenotypicSeriesCheckbox.getValue()) {
                             diseasesStringInteracting += RED_HEART + psDisease.toString() + "<br/>";
                             CVD2Protein diseaseProtein = new CVD2Protein(psDisease.name);
-                            diseaseProtein.addProtein(protein.getUniprot()+"("+interactingProtein.getUniprot()+")");
+                            diseaseProtein.addProtein(protein.getUniprot()+" ("+interactingProtein.getUniprot()+")");
                             diseaseProtein.calculatePvalue(psDisease.psNumber);
                             cvd2proteins.add(diseaseProtein);
                         }
