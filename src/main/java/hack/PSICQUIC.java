@@ -46,14 +46,20 @@ public class PSICQUIC {
                 int firstColon = tokens[0].indexOf(':');
                 String firstProtein = tokens[0].substring(firstColon + 1);
 
-                if (!firstProtein.equals(uniprotID))
-                    results.add(firstProtein);
+                if (!firstProtein.equals(uniprotID)){
+                    if (firstProtein.length()<7) {
+                        results.add(firstProtein);
+                    }
+                }
 
                 int secondColon = tokens[1].indexOf(':');
                 String secondProtein = tokens[1].substring(secondColon + 1);
 
-                if (!secondProtein.equals(uniprotID))
-                    results.add(secondProtein);
+                if (!secondProtein.equals(uniprotID)){
+                    if (secondProtein.length()<7) {
+                        results.add(secondProtein);
+                    }
+                }
             }
             catch(ArrayIndexOutOfBoundsException ex){
                 ex.printStackTrace();

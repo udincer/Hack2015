@@ -7,7 +7,6 @@ import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import hack.model.Protein;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.*;
 
@@ -22,7 +21,7 @@ public class HackUI extends UI {
 
     final VerticalLayout resultPageLayout = new VerticalLayout();
     final Button returnButton = new Button("New query!");
-    final Table resultsTable = new Table("Disease associations");
+    final TreeTable resultsTable = new TreeTable("Disease associations");
 
     @Autowired
     public OmimClient omimClient;
@@ -59,7 +58,7 @@ public class HackUI extends UI {
             }
         });
 
-        textArea.setValue("P38398\n" + "P99999");
+        textArea.setValue("P38398\nP99999\nP60484");
 
         mainPageLayout.addComponent(label);
         mainPageLayout.addComponent(textArea);
@@ -107,8 +106,10 @@ public class HackUI extends UI {
             diseasesLabel.setContentMode(ContentMode.PREFORMATTED);
             Label uniprotLabel = new Label(protein.getUniprot());
             uniprotLabel.setContentMode(ContentMode.PREFORMATTED);
-            resultsTable.addItem(new Object[]{uniprotLabel, protein.getGene(), diseasesLabel,
-                    protein.getLink()}, i + 1);
+            Object[] mainProteinCells = {uniprotLabel, protein.getGene(), diseasesLabel,
+                    protein.getLink()};
+            Object mainProteinRow = resultsTable.addItem(mainProteinCells, i + 1);
+            resultsTable.setCollapsed(mainProteinRow, false);
             i++;
             for (Protein interactingProtein : protein.getInteractingProteins()) {
                 String diseasesStringInteracting = "";
@@ -119,12 +120,16 @@ public class HackUI extends UI {
                 diseaseLabelInteracting.setContentMode(ContentMode.PREFORMATTED);
                 Label uniprotLabelInteracting = new Label("\t(" + interactingProtein.getUniprot() + ")");
                 uniprotLabelInteracting.setContentMode(ContentMode.PREFORMATTED);
-                resultsTable.addItem(new Object[]{uniprotLabelInteracting, interactingProtein.getGene(),
-                        diseaseLabelInteracting, interactingProtein.getLink()}, i + 1);
+                Object[] cells = {uniprotLabelInteracting, interactingProtein.getGene(),
+                        diseaseLabelInteracting, interactingProtein.getLink()};
+                Object interactionProteinRow = resultsTable.addItem(cells, i + 1);
+                resultsTable.setParent(interactionProteinRow, mainProteinRow);
+                resultsTable.setChildrenAllowed(interactionProteinRow, false);
+                resultsTable.setCollapsed(interactionProteinRow, false);
                 i++;
             }
         }
-        resultsTable.setPageLength(resultsTable.size());
+        resultsTable.setPageLength(20);
         setContent(resultPageLayout);
     }
 
