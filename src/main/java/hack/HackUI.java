@@ -2,15 +2,14 @@ package hack;
 
 import com.vaadin.annotations.Theme;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.spring.annotation.SpringUI;
 import com.vaadin.ui.*;
 import hack.model.Protein;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SpringUI
 @Theme("valo")
@@ -50,16 +49,17 @@ public class HackUI extends UI {
                 List<String> proteinUniprots = Arrays.asList(p);
 
                 for (String proteinUniprot : proteinUniprots) {
-                    String gene = uniprotClient.mapToGeneSymbol(proteinUniprot);
-                    System.out.println(gene);
-                    Protein protein = new Protein();
-                    protein.setUniprot(proteinUniprot);
-                    protein.setGene(gene);
+                    Protein protein = new Protein(proteinUniprot);
+                    protein.populateGene(uniprotClient);
+                    protein.populateDisease(omimClient);
+                    protein.populateInteractingProteins(uniprotClient, omimClient);
                     proteinMap.put(proteinUniprot, protein);
                 }
                 loadResultsPage();
             }
         });
+
+        textArea.setValue("P38398\n" + "P99999");
 
         mainPageLayout.addComponent(label);
         mainPageLayout.addComponent(textArea);
@@ -71,9 +71,9 @@ public class HackUI extends UI {
     public void initResultsPage(){
         resultPageLayout.addComponent(new Label("Results page!"));
 
-        resultsTable.addContainerProperty("Uniprot", String.class, null);
+        resultsTable.addContainerProperty("Uniprot", Label.class, null);
         resultsTable.addContainerProperty("Gene Name", String.class, null);
-        resultsTable.addContainerProperty("Associated disease", String.class, null);
+        resultsTable.addContainerProperty("Associated disease", Label.class, null);
         resultsTable.addContainerProperty("GeneWiki link", String.class, null);
 
         returnButton.addClickListener(new Button.ClickListener() {
@@ -98,12 +98,29 @@ public class HackUI extends UI {
         resultsTable.removeAllItems();
         for (Map.Entry<String, Protein> entry : proteinMap.entrySet()) {
             Protein protein = entry.getValue();
-            resultsTable.addItem(new Object[]{protein.getUniprot(), protein.getGene(), protein.getCvd(),
+
+            String diseasesString = "";
+            for (OMIM.Disease disease : protein.getCvd()) {
+                diseasesString += disease.toString() + "\n";
+            }
+            Label diseasesLabel = new Label(diseasesString);
+            diseasesLabel.setContentMode(ContentMode.PREFORMATTED);
+            Label uniprotLabel = new Label(protein.getUniprot());
+            uniprotLabel.setContentMode(ContentMode.PREFORMATTED);
+            resultsTable.addItem(new Object[]{uniprotLabel, protein.getGene(), diseasesLabel,
                     protein.getLink()}, i + 1);
             i++;
             for (Protein interactingProtein : protein.getInteractingProteins()) {
-                resultsTable.addItem(new Object[]{interactingProtein.getUniprot(), interactingProtein.getGene(),
-                        interactingProtein.getCvd(), interactingProtein.getLink()}, i + 1);
+                String diseasesStringInteracting = "";
+                for (OMIM.Disease disease : interactingProtein.getCvd()) {
+                    diseasesStringInteracting += disease.toString() + "\n";
+                }
+                Label diseaseLabelInteracting = new Label(diseasesStringInteracting);
+                diseaseLabelInteracting.setContentMode(ContentMode.PREFORMATTED);
+                Label uniprotLabelInteracting = new Label("\t(" + interactingProtein.getUniprot() + ")");
+                uniprotLabelInteracting.setContentMode(ContentMode.PREFORMATTED);
+                resultsTable.addItem(new Object[]{uniprotLabelInteracting, interactingProtein.getGene(),
+                        diseaseLabelInteracting, interactingProtein.getLink()}, i + 1);
                 i++;
             }
         }
