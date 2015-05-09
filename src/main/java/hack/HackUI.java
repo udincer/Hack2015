@@ -14,10 +14,17 @@ import java.util.*;
 @Theme("valo")
 public class HackUI extends UI {
 
+    final static String TITLE = "<h1>PPICardio</h1>" +
+            "<h2>Protein-Protein Interaction to<br/>Cardiovascular Disease<h2/>";
+    public static final String RED_HEART = "<span style=\"color:red\">♥ </span>";
+    public static final String RED_HEART_INVISIBLE = "<span style=\"visibility:hidden\">♥ </span>";
+    public static final String DEFAULTS = "P38398\nP19429\nQ6UWE0";
+
+
     final VerticalLayout rootLayout = new VerticalLayout();
     final Panel mainPagePanel = new Panel();
     final VerticalLayout mainPageLayout = new VerticalLayout();
-    final Label titleLabel = new Label("<h1>BD2K /NoB Hackathon 2015!</h1>");
+    final Label titleLabel = new Label(TITLE);
     final TextArea textArea = new TextArea("Enter proteins here");
     final Button button = new Button("Go!");
 
@@ -26,6 +33,8 @@ public class HackUI extends UI {
     final TreeTable resultsTable = new TreeTable("Disease associations");
 
     final CheckBox phenotypicSeriesCheckbox = new CheckBox("Display phenotypic series");
+
+    final Label infoLabel = new Label("BD2K/NoB Hackathon 2015");
 
     @Autowired
     public OmimClient omimClient;
@@ -52,6 +61,9 @@ public class HackUI extends UI {
         rootLayout.setMargin(true);
         rootLayout.setSpacing(true);
 
+        infoLabel.setSizeUndefined();
+        rootLayout.addComponent(infoLabel);
+
         mainPagePanel.setSizeUndefined();
         mainPagePanel.setContent(mainPageLayout);
 
@@ -74,7 +86,7 @@ public class HackUI extends UI {
             }
         });
 
-        textArea.setValue("P38398\nP19429\nP60484");
+        textArea.setValue(DEFAULTS);
         textArea.setWidth(300f, Unit.PIXELS);
 
         titleLabel.setContentMode(ContentMode.HTML);
@@ -94,7 +106,7 @@ public class HackUI extends UI {
         resultsTable.addContainerProperty("Uniprot", Label.class, null);
         resultsTable.addContainerProperty("Gene Name", String.class, null);
         resultsTable.addContainerProperty("Associated disease", Label.class, null);
-        resultsTable.addContainerProperty("P-value", String.class, null);
+        //resultsTable.addContainerProperty("P-value", String.class, null);
         resultsTable.setHeight(500f, Unit.PIXELS);
         resultsTable.setWidth(1200f, Unit.PIXELS);
 
@@ -120,7 +132,6 @@ public class HackUI extends UI {
         resultsTable.removeAllItems();
         AccessDiseaseDB.createConnection();
 
-        int sampleSize = proteinMap.entrySet().size(); // total number of proteins user input
         for (Map.Entry<String, Protein> entry : proteinMap.entrySet()) {
             Protein protein = entry.getValue();
             String diseasesString = "";
@@ -128,33 +139,30 @@ public class HackUI extends UI {
                 AccessDiseaseDB.PSDisease psDisease = AccessDiseaseDB.getPSNumber(disease.getId());
                 if (psDisease != null) {
                     if (phenotypicSeriesCheckbox.getValue()) {
-                        diseasesString += "♥ " + psDisease.toString() + "\n";
-
+                        diseasesString += RED_HEART + psDisease.toString() + "<br/>";
                         CVD2Protein diseaseProtein = new CVD2Protein(psDisease.name);
                         diseaseProtein.addProtein(protein.getUniprot());
                         diseaseProtein.calculatePvalue(psDisease.psNumber);
                         cvd2proteins.add(diseaseProtein);
-
                     }
                     else{
-                        diseasesString += "♥ " + disease.toString() + "\n";
+                        diseasesString += RED_HEART + disease.toString() + "<br/>";
                     }
                 }
                 else {
                     if (phenotypicSeriesCheckbox.getValue()) {
-                        diseasesString += "\n";
+                        diseasesString += "";
                     }
                     else{
-                        diseasesString += "  " + disease.toString() + "\n";
+                        diseasesString += RED_HEART_INVISIBLE + disease.toString() + "<br/>";
                     }
                 }
             }
             Label diseasesLabel = new Label(diseasesString);
-            diseasesLabel.setContentMode(ContentMode.PREFORMATTED);
+            diseasesLabel.setContentMode(ContentMode.HTML);
             Label uniprotLabel = new Label(protein.getUniprot());
-            uniprotLabel.setContentMode(ContentMode.PREFORMATTED);
-            Object[] mainProteinCells = {uniprotLabel, protein.getGene(), diseasesLabel,
-                    protein.getLink()};
+            uniprotLabel.setContentMode(ContentMode.HTML);
+            Object[] mainProteinCells = {uniprotLabel, protein.getGene(), diseasesLabel};
             Object mainProteinRow = resultsTable.addItem(mainProteinCells, i + 1);
             resultsTable.setCollapsed(mainProteinRow, false);
             i++;
@@ -164,31 +172,31 @@ public class HackUI extends UI {
                     AccessDiseaseDB.PSDisease psDisease = AccessDiseaseDB.getPSNumber(disease.getId());
                     if (psDisease != null) {
                         if (phenotypicSeriesCheckbox.getValue()) {
-                            diseasesStringInteracting += "♥ " + psDisease.toString() + "\n";
+                            diseasesStringInteracting += RED_HEART + psDisease.toString() + "<br/>";
                             CVD2Protein diseaseProtein = new CVD2Protein(psDisease.name);
                             diseaseProtein.addProtein(protein.getUniprot()+"("+interactingProtein.getUniprot()+")");
                             diseaseProtein.calculatePvalue(psDisease.psNumber);
                             cvd2proteins.add(diseaseProtein);
                         }
                         else{
-                            diseasesStringInteracting += "♥ " + disease.toString() + "\n";
+                            diseasesStringInteracting += RED_HEART + disease.toString() + "<br/>";
                         }
                     }
                     else {
                         if (phenotypicSeriesCheckbox.getValue()) {
-                            diseasesStringInteracting += "\n";
+                            diseasesStringInteracting += "";
                         }
                         else{
-                            diseasesStringInteracting += "  " + disease.toString() + "\n";
+                            diseasesStringInteracting += RED_HEART_INVISIBLE + disease.toString() + "<br/>";
                         }
                     }
                 }
                 Label diseaseLabelInteracting = new Label(diseasesStringInteracting);
-                diseaseLabelInteracting.setContentMode(ContentMode.PREFORMATTED);
+                diseaseLabelInteracting.setContentMode(ContentMode.HTML);
                 Label uniprotLabelInteracting = new Label("\t(" + interactingProtein.getUniprot() + ")");
-                uniprotLabelInteracting.setContentMode(ContentMode.PREFORMATTED);
+                uniprotLabelInteracting.setContentMode(ContentMode.HTML);
                 Object[] cells = {uniprotLabelInteracting, interactingProtein.getGene(),
-                        diseaseLabelInteracting, interactingProtein.getLink()};
+                        diseaseLabelInteracting};
                 Object interactionProteinRow = resultsTable.addItem(cells, i + 1);
                 resultsTable.setParent(interactionProteinRow, mainProteinRow);
                 resultsTable.setChildrenAllowed(interactionProteinRow, false);
@@ -199,13 +207,6 @@ public class HackUI extends UI {
         AccessDiseaseDB.closeConnection();
         resultsTable.setPageLength(resultsTable.size());
         setContent(resultPageLayout);
-
-//        System.out.println("*********");
-//        for(CVD2Protein c: cvd2proteins){
-//            System.out.println(c.getName()+",\t pvalue: "+c.getpValue()+"\t adjusted: "+c.calculateAdjustedPValue(cvd2proteins.size()));
-//            for(String s: c.getProteins())
-//                System.out.println(s);
-//        }
     }
 
 }
