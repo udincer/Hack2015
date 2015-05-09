@@ -9,6 +9,10 @@ public class AccessDiseaseDB {
 
     private static Connection con = null;
 
+    public static class PSDisease{
+        public String psNumber;
+        public String name;
+    }
 
     public static boolean createConnection(){
 
@@ -45,9 +49,10 @@ public class AccessDiseaseDB {
 
     }
 
-    public static String getPSNumber(int mimNumber){
-        String query = "SELECT psNumber FROM broad_specific WHERE "+
-                "mimNumber=";
+    public static PSDisease getPSNumber(int mimNumber){
+        String query = "SELECT b.psNumber, b.name FROM broad_specific a JOIN broad_disease b " +
+                "on a.psNumber=b.psNumber WHERE "+
+                "a.mimNumber=";
         Statement st = null;
         ResultSet rs = null;
         try {
@@ -55,8 +60,13 @@ public class AccessDiseaseDB {
 
             rs = st.executeQuery(query+Integer.toString(mimNumber));
 
-            if(rs.next())
-                return rs.getString(1);
+            if(rs.next()) {
+                PSDisease d = new PSDisease();
+                d.psNumber = rs.getString(1);
+                d.name = rs.getString(2);
+
+                return d;
+            }
 
         } catch (SQLException ex) {
 
@@ -111,8 +121,8 @@ public class AccessDiseaseDB {
 
     public static void main(String[] args) {
         AccessDiseaseDB.createConnection();
-
-        System.out.println(AccessDiseaseDB.getPSNumber(609782));
+        PSDisease d = AccessDiseaseDB.getPSNumber(609782);
+        System.out.println(d.psNumber+" "+d.name);
         System.out.println(AccessDiseaseDB.getNumGenes("PS100070"));
         AccessDiseaseDB.closeConnection();
     }
