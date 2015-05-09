@@ -18,6 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Protein {
 
+    public static final int POOL_SIZE = 40;
     String uniprot;
     String gene;
     List<OMIM.Disease> cvd;
@@ -36,7 +37,7 @@ public class Protein {
 
         final List<String> interactingUniprots = PSICQUIC.getInteractingProteins(uniprot);
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(20);
+        executor.setCorePoolSize(POOL_SIZE);
         executor.initialize();
         for (final String interactingUniprot : interactingUniprots) {
             Runnable r = new Runnable() {

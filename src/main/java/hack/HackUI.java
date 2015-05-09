@@ -14,14 +14,18 @@ import java.util.*;
 @Theme("valo")
 public class HackUI extends UI {
 
+    final VerticalLayout rootLayout = new VerticalLayout();
+    final Panel mainPagePanel = new Panel();
     final VerticalLayout mainPageLayout = new VerticalLayout();
-    final Label label = new Label("BD2K Hackathon 2015!");
+    final Label titleLabel = new Label("<h1>BD2K Hackathon 2015!</h1>");
     final TextArea textArea = new TextArea("Enter proteins here");
     final Button button = new Button("Go!");
 
     final VerticalLayout resultPageLayout = new VerticalLayout();
     final Button returnButton = new Button("New query!");
     final TreeTable resultsTable = new TreeTable("Disease associations");
+
+    final CheckBox phenotypicSeriesCheckbox = new CheckBox("Display phenotypic series");
 
     @Autowired
     public OmimClient omimClient;
@@ -40,6 +44,15 @@ public class HackUI extends UI {
     }
 
     public void initMainPage(){
+
+        rootLayout.setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
+        rootLayout.addComponent(mainPagePanel);
+        rootLayout.setMargin(true);
+        rootLayout.setSpacing(true);
+
+        mainPagePanel.setSizeUndefined();
+        mainPagePanel.setContent(mainPageLayout);
+
         button.addClickListener(new Button.ClickListener() {
             @Override
             public void buttonClick(Button.ClickEvent clickEvent) {
@@ -58,10 +71,14 @@ public class HackUI extends UI {
             }
         });
 
-        textArea.setValue("P38398\nP99999\nP60484");
+        textArea.setValue("P38398\nP19429\nP60484");
+        textArea.setWidth("100%");
 
-        mainPageLayout.addComponent(label);
+        titleLabel.setContentMode(ContentMode.HTML);
+
+        mainPageLayout.addComponent(titleLabel);
         mainPageLayout.addComponent(textArea);
+        mainPageLayout.addComponent(phenotypicSeriesCheckbox);
         mainPageLayout.addComponent(button);
         mainPageLayout.setSpacing(true);
         mainPageLayout.setMargin(true);
@@ -73,7 +90,9 @@ public class HackUI extends UI {
         resultsTable.addContainerProperty("Uniprot", Label.class, null);
         resultsTable.addContainerProperty("Gene Name", String.class, null);
         resultsTable.addContainerProperty("Associated disease", Label.class, null);
-        resultsTable.addContainerProperty("GeneWiki link", String.class, null);
+        resultsTable.addContainerProperty("P-value", String.class, null);
+        resultsTable.setHeight(500f, Unit.PIXELS);
+        resultsTable.setWidth(1200f, Unit.PIXELS);
 
         returnButton.addClickListener(new Button.ClickListener() {
             @Override
@@ -89,18 +108,35 @@ public class HackUI extends UI {
 
     public void loadMainPage(){
         proteinMap.clear();
-        setContent(mainPageLayout);
+        setContent(rootLayout);
     }
 
     public void loadResultsPage(){
         int i = 0;
         resultsTable.removeAllItems();
+        AccessDiseaseDB.createConnection();
+
         for (Map.Entry<String, Protein> entry : proteinMap.entrySet()) {
             Protein protein = entry.getValue();
-
             String diseasesString = "";
             for (OMIM.Disease disease : protein.getCvd()) {
-                diseasesString += disease.toString() + "\n";
+                AccessDiseaseDB.PSDisease psDisease = AccessDiseaseDB.getPSNumber(disease.getId());
+                if (psDisease != null) {
+                    if (phenotypicSeriesCheckbox.getValue()) {
+                        diseasesString += "♥ " + psDisease.toString() + "\n";
+                    }
+                    else{
+                        diseasesString += "♥ " + disease.toString() + "\n";
+                    }
+                }
+                else {
+                    if (phenotypicSeriesCheckbox.getValue()) {
+                        diseasesString += "\n";
+                    }
+                    else{
+                        diseasesString += "  " + disease.toString() + "\n";
+                    }
+                }
             }
             Label diseasesLabel = new Label(diseasesString);
             diseasesLabel.setContentMode(ContentMode.PREFORMATTED);
@@ -114,7 +150,23 @@ public class HackUI extends UI {
             for (Protein interactingProtein : protein.getInteractingProteins()) {
                 String diseasesStringInteracting = "";
                 for (OMIM.Disease disease : interactingProtein.getCvd()) {
-                    diseasesStringInteracting += disease.toString() + "\n";
+                    AccessDiseaseDB.PSDisease psDisease = AccessDiseaseDB.getPSNumber(disease.getId());
+                    if (psDisease != null) {
+                        if (phenotypicSeriesCheckbox.getValue()) {
+                            diseasesStringInteracting += "♥ " + psDisease.toString() + "\n";
+                        }
+                        else{
+                            diseasesStringInteracting += "♥ " + disease.toString() + "\n";
+                        }
+                    }
+                    else {
+                        if (phenotypicSeriesCheckbox.getValue()) {
+                            diseasesStringInteracting += "\n";
+                        }
+                        else{
+                            diseasesStringInteracting += "  " + disease.toString() + "\n";
+                        }
+                    }
                 }
                 Label diseaseLabelInteracting = new Label(diseasesStringInteracting);
                 diseaseLabelInteracting.setContentMode(ContentMode.PREFORMATTED);
@@ -129,7 +181,8 @@ public class HackUI extends UI {
                 i++;
             }
         }
-        resultsTable.setPageLength(20);
+        AccessDiseaseDB.closeConnection();
+        resultsTable.setPageLength(resultsTable.size());
         setContent(resultPageLayout);
     }
 

@@ -12,6 +12,11 @@ public class AccessDiseaseDB {
     public static class PSDisease{
         public String psNumber;
         public String name;
+
+        @Override
+        public String toString() {
+            return name + ", Identifier: " + psNumber;
+        }
     }
 
     public static boolean createConnection(){
