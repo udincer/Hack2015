@@ -1,9 +1,6 @@
 package hack.model;
 
-import hack.OMIM;
-import hack.OmimClient;
-import hack.PSICQUIC;
-import hack.UniprotClient;
+import hack.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.task.TaskExecutor;
@@ -36,6 +33,9 @@ public class Protein {
     public void populateInteractingProteins(final UniprotClient uniprotClient, final OmimClient omimClient){
 
         final List<String> interactingUniprots = PSICQUIC.getInteractingProteins(uniprot);
+        //Todo get rid of duplicate proteins
+        CVD2Protein.sampleSize+=interactingUniprots.size();
+
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(POOL_SIZE);
         executor.initialize();

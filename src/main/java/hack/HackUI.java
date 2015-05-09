@@ -35,6 +35,8 @@ public class HackUI extends UI {
 
     final Map<String, Protein> proteinMap = new HashMap<>();
 
+    final Set<CVD2Protein> cvd2proteins = new HashSet<>();
+
     @Override
     protected void init(VaadinRequest vaadinRequest) {
         initMainPage();
@@ -61,6 +63,7 @@ public class HackUI extends UI {
                 List<String> proteinUniprots = Arrays.asList(p);
 
                 for (String proteinUniprot : proteinUniprots) {
+                    CVD2Protein.sampleSize++;
                     Protein protein = new Protein(proteinUniprot);
                     protein.populateGene(uniprotClient);
                     protein.populateDisease(omimClient);
@@ -116,6 +119,7 @@ public class HackUI extends UI {
         resultsTable.removeAllItems();
         AccessDiseaseDB.createConnection();
 
+        int sampleSize = proteinMap.entrySet().size(); // total number of proteins user input
         for (Map.Entry<String, Protein> entry : proteinMap.entrySet()) {
             Protein protein = entry.getValue();
             String diseasesString = "";
@@ -124,6 +128,12 @@ public class HackUI extends UI {
                 if (psDisease != null) {
                     if (phenotypicSeriesCheckbox.getValue()) {
                         diseasesString += "♥ " + psDisease.toString() + "\n";
+
+                        CVD2Protein diseaseProtein = new CVD2Protein(psDisease.name);
+                        diseaseProtein.addProtein(protein.getUniprot());
+                        diseaseProtein.calculatePvalue(psDisease.psNumber);
+                        cvd2proteins.add(diseaseProtein);
+
                     }
                     else{
                         diseasesString += "♥ " + disease.toString() + "\n";
@@ -154,6 +164,10 @@ public class HackUI extends UI {
                     if (psDisease != null) {
                         if (phenotypicSeriesCheckbox.getValue()) {
                             diseasesStringInteracting += "♥ " + psDisease.toString() + "\n";
+                            CVD2Protein diseaseProtein = new CVD2Protein(psDisease.name);
+                            diseaseProtein.addProtein(protein.getUniprot()+"("+interactingProtein.getUniprot()+")");
+                            diseaseProtein.calculatePvalue(psDisease.psNumber);
+                            cvd2proteins.add(diseaseProtein);
                         }
                         else{
                             diseasesStringInteracting += "♥ " + disease.toString() + "\n";
@@ -184,6 +198,13 @@ public class HackUI extends UI {
         AccessDiseaseDB.closeConnection();
         resultsTable.setPageLength(resultsTable.size());
         setContent(resultPageLayout);
+
+//        System.out.println("*********");
+//        for(CVD2Protein c: cvd2proteins){
+//            System.out.println(c.getName()+",\t pvalue: "+c.getpValue()+"\t adjusted: "+c.calculateAdjustedPValue(cvd2proteins.size()));
+//            for(String s: c.getProteins())
+//                System.out.println(s);
+//        }
     }
 
 }
