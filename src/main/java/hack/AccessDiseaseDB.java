@@ -16,14 +16,16 @@ public class AccessDiseaseDB {
 
     public static boolean createConnection(){
 
-        if(con!=null)
-            return true;
 
         String url = "jdbc:mysql://104.236.142.82:3306/copa";
         String user = "root";
         String password = "peptidemsms";
 
         try {
+
+            if(con!=null && !con.isClosed()) {
+                return true;
+            }
             con = DriverManager.getConnection(url, user, password);
             return true;
         } catch (SQLException ex) {
@@ -123,6 +125,12 @@ public class AccessDiseaseDB {
         AccessDiseaseDB.createConnection();
         PSDisease d = AccessDiseaseDB.getPSNumber(609782);
         System.out.println(d.psNumber+" "+d.name);
+        System.out.println(AccessDiseaseDB.getNumGenes("PS100070"));
+        AccessDiseaseDB.closeConnection();
+
+        AccessDiseaseDB.createConnection();
+        PSDisease e = AccessDiseaseDB.getPSNumber(609782);
+        System.out.println(e.psNumber+" "+e.name);
         System.out.println(AccessDiseaseDB.getNumGenes("PS100070"));
         AccessDiseaseDB.closeConnection();
     }

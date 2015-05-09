@@ -14,14 +14,16 @@ public class PopulateDiseaseTables {
 
     public static boolean createConnection(){
 
-        if(con!=null)
-            return true;
 
         String url = "jdbc:mysql://104.236.142.82:3306/copa";
         String user = "root";
         String password = "peptidemsms";
 
         try {
+
+            if(con!=null && !con.isClosed()) {
+                return true;
+            }
             con = DriverManager.getConnection(url, user, password);
             return true;
         } catch (SQLException ex) {
@@ -159,5 +161,7 @@ public class PopulateDiseaseTables {
         PopulateDiseaseTables.readAndInsert("./src/main/resources/OMIM.tsv");
 
         PopulateDiseaseTables.closeConnection();
+
+
     }
 }
