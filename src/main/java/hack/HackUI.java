@@ -17,7 +17,7 @@ public class HackUI extends UI {
     final VerticalLayout rootLayout = new VerticalLayout();
     final Panel mainPagePanel = new Panel();
     final VerticalLayout mainPageLayout = new VerticalLayout();
-    final Label titleLabel = new Label("<h1>BD2K Hackathon 2015!</h1>");
+    final Label titleLabel = new Label("<h1>BD2K /NoB Hackathon 2015!</h1>");
     final TextArea textArea = new TextArea("Enter proteins here");
     final Button button = new Button("Go!");
 
@@ -72,10 +72,11 @@ public class HackUI extends UI {
         });
 
         textArea.setValue("P38398\nP19429\nP60484");
-        textArea.setWidth("100%");
+        textArea.setWidth(300f, Unit.PIXELS);
 
         titleLabel.setContentMode(ContentMode.HTML);
 
+        mainPageLayout.setDefaultComponentAlignment(Alignment.MIDDLE_CENTER);
         mainPageLayout.addComponent(titleLabel);
         mainPageLayout.addComponent(textArea);
         mainPageLayout.addComponent(phenotypicSeriesCheckbox);
