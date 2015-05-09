@@ -40,19 +40,24 @@ public class PSICQUIC {
         String[] entries = PSICQUIC.getJSON(psicquicURL+uniprotID).split("\n");
         for(String s: entries){
 
-            String[] tokens = s.split("\t");
+            try {
+                String[] tokens = s.split("\t");
 
-            int firstColon = tokens[0].indexOf(':');
-            String firstProtein = tokens[0].substring(firstColon + 1);
+                int firstColon = tokens[0].indexOf(':');
+                String firstProtein = tokens[0].substring(firstColon + 1);
 
-            if(!firstProtein.equals(uniprotID))
-                results.add(firstProtein);
+                if (!firstProtein.equals(uniprotID))
+                    results.add(firstProtein);
 
-            int secondColon = tokens[1].indexOf(':');
-            String secondProtein = tokens[1].substring(secondColon + 1);
+                int secondColon = tokens[1].indexOf(':');
+                String secondProtein = tokens[1].substring(secondColon + 1);
 
-            if(!secondProtein.equals(uniprotID))
-                results.add(secondProtein);
+                if (!secondProtein.equals(uniprotID))
+                    results.add(secondProtein);
+            }
+            catch(ArrayIndexOutOfBoundsException ex){
+                ex.printStackTrace();
+            }
         }
 
         ArrayList<String> list = new ArrayList<>(results);

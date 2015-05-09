@@ -21,13 +21,35 @@ public class OMIM {
     private final String omimURL = "http://api.omim.org/api/search/geneMap?search=";
 
     public class Disease{
+
         public String name = "";
         public int id = 0;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        @Override
+        public String toString() {
+            return name + ", OMIM ID: " + id;
+        }
     }
 
     public OMIM(List<Integer> validDiseases){
-        this.validDiseases = new ArrayList<Integer>();
-        this.validDiseases.addAll(validDiseases);
+//        this.validDiseases = new ArrayList<Integer>();
+//        this.validDiseases.addAll(validDiseases);
     }
 
     public List<Integer> getValidDiseases(){
@@ -53,6 +75,9 @@ public class OMIM {
 
     public List<Disease> getDiseases(String gene){
         ArrayList<Disease> diseases = new ArrayList<Disease>(0);
+        if (gene.isEmpty()) {
+            return diseases;
+        }
 
         JSONObject json = getJSON(omimURL+gene);
 
@@ -61,24 +86,28 @@ public class OMIM {
         JSONArray geneMapList = searchResponse.getJSONArray("geneMapList");
         for(int k = 0; k < geneMapList.length(); k++) {
             JSONObject geneMap = geneMapList.getJSONObject(k).getJSONObject("geneMap");
-            JSONArray phenotypeMapList = geneMap.getJSONArray("phenotypeMapList");
-            for (int i = 0; i < phenotypeMapList.length(); i++) {
-                JSONObject j = phenotypeMapList.getJSONObject(i);
-                JSONObject phenotypeMap = j.getJSONObject("phenotypeMap");
+            if (geneMap.has("phenotypeMapList")) {
+                JSONArray phenotypeMapList = geneMap.getJSONArray("phenotypeMapList");
+                for (int i = 0; i < phenotypeMapList.length(); i++) {
+                    JSONObject j = phenotypeMapList.getJSONObject(i);
+                    JSONObject phenotypeMap = j.getJSONObject("phenotypeMap");
 
-                if(!phenotypeMap.has("phenotypeMimNumber") || !this.validDiseases.contains(phenotypeMap.getInt("phenotypeMimNumber")))
-                    continue;
+                    if (validDiseases != null) {
+                        if(!phenotypeMap.has("phenotypeMimNumber") || !this.validDiseases.contains(phenotypeMap.getInt("phenotypeMimNumber")))
+                            continue;
+                    }
 
-                Disease disease = new Disease();
+                    Disease disease = new Disease();
 
-                if (phenotypeMap.has("phenotype"))
-                    disease.name = phenotypeMap.getString("phenotype");
+                    if (phenotypeMap.has("phenotype"))
+                        disease.name = phenotypeMap.getString("phenotype");
 
-                if (phenotypeMap.has("phenotypeMimNumber"))
-                    disease.id = phenotypeMap.getInt("phenotypeMimNumber");
+                    if (phenotypeMap.has("phenotypeMimNumber"))
+                        disease.id = phenotypeMap.getInt("phenotypeMimNumber");
 
 
-                diseases.add(disease);
+                    diseases.add(disease);
+                }
             }
         }
 

@@ -1,21 +1,69 @@
 package hack.model;
 
+import hack.OMIM;
+import hack.OmimClient;
+import hack.PSICQUIC;
+import hack.UniprotClient;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ConcurrentTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.stereotype.Component;
+
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Created by umut on 5/8/15.
- */
 public class Protein {
 
     String uniprot;
     String gene;
-    String cvd;
+    List<OMIM.Disease> cvd;
     URL link;
-    List<Protein> interactingProteins = new ArrayList<>();
+    List<Protein> interactingProteins = new CopyOnWriteArrayList<>();
 
-    public Protein() {
+    public Protein(String uniprot) {
+        this.uniprot = uniprot;
+    }
+
+    public void populateGene(UniprotClient uniprotClient){
+        gene = uniprotClient.mapToGeneSymbol(uniprot);
+    }
+
+    public void populateInteractingProteins(final UniprotClient uniprotClient, final OmimClient omimClient){
+
+        final List<String> interactingUniprots = PSICQUIC.getInteractingProteins(uniprot);
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(20);
+        executor.initialize();
+        for (final String interactingUniprot : interactingUniprots) {
+            Runnable r = new Runnable() {
+                @Override
+                public void run() {
+                    Protein p = new Protein(interactingUniprot);
+                    p.populateGene(uniprotClient);
+                    p.populateDisease(omimClient);
+                    interactingProteins.add(p);
+                }
+            };
+            executor.execute(r);
+//            Protein p = new Protein(interactingUniprot);
+//            p.populateGene(uniprotClient);
+//            p.populateDisease(omimClient);
+//            interactingProteins.add(p);
+        }
+        for(;;) {
+            //System.out.println(executor.getActiveCount());
+            if (executor.getActiveCount() == 0) {
+                break;
+            }
+        }
+    }
+
+    public void populateDisease(OmimClient omimClient){
+        cvd = omimClient.getDiseases(gene);
     }
 
     public Protein(String uniprot, String gene) {
@@ -39,11 +87,11 @@ public class Protein {
         this.gene = gene;
     }
 
-    public String getCvd() {
+    public List<OMIM.Disease> getCvd() {
         return cvd;
     }
 
-    public void setCvd(String cvd) {
+    public void setCvd(List<OMIM.Disease> cvd) {
         this.cvd = cvd;
     }
 
